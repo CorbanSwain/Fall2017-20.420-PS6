@@ -1,11 +1,25 @@
 classdef Dynein
     properties
-        AtpSites = [0, 0] % [primary (hydrolyzable) sites, secondary sites]
         Position = 0;
     end % properties
+    properties (SetAccess = 'private')
+        AtpSites = [0, 0] % [primary (hydrolyzable) sites, secondary sites]
+    end
     properties (Constant)
-        NUM_HYDRO_SITES = 1;
-        NUM_SITES = 4;
+        NUM_HYDRO_SITES = 1
+        NUM_SITES = 4
+        STEP_INCREMENT = 8
+        K_ON_1_0 = 4E5 % 1/M 1/s
+        K_OFF_1_0 = 10 % 1/s
+        K_OFF_2_0 = 250 % 1/s
+        K_CAT = 55 % 1/s
+        K_ON_0 = [1, 1, 1/4, 1/6] * Dynein.K_ON_1_0
+        K_OFF_0 = [Dynein.K_OFF_1_0, [1, 1, 1] * Dynein.K_OFF_2_0]
+        KBT = 4.14195; % pN nm (300 K)
+        D0 = 6; % nm
+        ALPHA = 0.3;
+        BETA = 0.7;
+        P_SYN = 0.23;
     end
     properties (Dependent)
         S
@@ -83,5 +97,42 @@ classdef Dynein
                 warning('Primary Sites Empty, cannot hydrolyze ATP');
             end
         end
+        
+        function val = nextAtpOn(obj)
+            if obj.PrimaryS < obj.NUM_HYDRO_SITES
+                val = obj.PrimaryS + 1;
+            elseif obj.S < obj.NUM_SITES
+                val = obj.S + 1;
+            else
+                val = 0;
+            end
+        end
+        function val = kon(obj, atpConc, force)
+            nextOn = nextAtpOn(obj);
+            kon0 = obj.K_ON_0(nextOn);
+            val = kon0 .* atpConc .* obj.loadfactor(force);
+        end
+        
+        function val = nextAtpOff(obj)
+            if obj.SecondaryS > 0
+                val = obj.NUM_HYDRO_SITES + obj.SecondaryS;
+            else
+                val = obj.S;
+            end
+        end
+        function val = koff(obj, atpConc)
+            nextOff = nextAtpOff(obj);
+            koff0 = obj.K_ON_0(nextOff);
+            val = koff0 .* atpConc;
+        end    
     end % methods
+    
+    methods (Static)
+        function val = stepsize(s)
+            val = (Dynein.NUM_SITES - s) * Dynein.STEP_INCREMENT;
+        end
+        function val = loadfactor(force)
+            val = exp((force .* Dynein.D0 ./ (Dynenin.KBT)));
+        end
+    end % static methods
 end % Dynein class
