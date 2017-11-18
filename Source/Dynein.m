@@ -1,26 +1,40 @@
 classdef Dynein
-    properties
-        Position = 0;
-    end % properties
     properties (SetAccess = 'private')
-        AtpSites = [0, 0] % [primary (hydrolyzable) sites, secondary sites]
-    end
+        AtpSites
+        Position = 0;
+    end % private properties
+    
     properties (Constant)
-        NUM_HYDRO_SITES = 1
         NUM_SITES = 4
+        NUM_HYDRO_SITES = 1
         STEP_INCREMENT = 8
         K_ON_1_0 = 4E5 % 1/M 1/s
         K_OFF_1_0 = 10 % 1/s
         K_OFF_2_0 = 250 % 1/s
-        K_CAT = 55 % 1/s
-        K_ON_0 = [1, 1, 1/4, 1/6] * Dynein.K_ON_1_0
-        K_OFF_0 = [Dynein.K_OFF_1_0, [1, 1, 1] * Dynein.K_OFF_2_0]
-        KBT = 4.14195; % pN nm (300 K)
+        K_CAT_0 = 55 % 1/s
+        K_ON_0_RATIO = [1, 1, 1/4, 1/6];
+        KBT = 4.14195; % pN nm (@ 300 K)
         D0 = 6; % nm
         ALPHA = 0.3;
-        BETA = 0.7;
-        P_SYN = 0.23;
-    end
+        P_SYN_0 = 0.23;
+        
+        % Dependent Constants
+        NUM_SECOND_SITES = Dynein.NUM_SITES - Dynein.NUM_HYDRO_SITES
+        
+        STEP_SIZE = (Dynein.NUM_SITES + 1 ...
+            - colon(1, Dynein.NUM_SITES)) ...
+            .* Dynein.STEP_INCREMENT
+        
+        K_ON_0 = Dynein.K_ON_0_RATIO .* Dynein.K_ON_1_0
+        
+        K_OFF_0 = [Dynein.K_OFF_1_0, ones(1, Dynein.NUM_SECOND_SITES) ...
+            .* Dynein.K_OFF_2_0]
+        
+        HYDRO_PREFACTOR = [1, ones(1, Dynein.NUM_SECOND_SITES) * 1e-2]
+        
+        BETA = 1 - Dynein.ALPHA;
+    end % constant properties
+    
     properties (Dependent)
         S
         PrimaryS
@@ -28,111 +42,161 @@ classdef Dynein
     end % dependent properties
     
     methods
+        function obj = Dynein
+            if Dynein.NUM_SITES <= Dynein.NUM_HYDRO_SITES
+                error('NUM_SITES must be greater than NUM_HYDRO_SITES');
+            end
+            if Dynein.NUM_SITES ~= length(Dynein.K_ON_0_RATIO)
+                error('K_ON_0_RATIO must have length equal to NUM_SITES');
+            end
+            obj.AtpSites = zeros(1, Dynein.NUM_SITES);
+        end % Dynein constructor
+        
         function val = get.S(obj)
             val = sum(obj.AtpSites);
         end % get.S(obj)
         
         % PrimaryS Get/Set
         function val = get.PrimaryS(obj)
-            val = obj.AtpSites(1);
+            val = sum(obj.AtpSites(1:Dynein.NUM_HYDRO_SITES));
         end
         function obj = set.PrimaryS(obj, val)
-            obj.AtpSites(1) = val;
+            val = CNSUtils.bound(val, 0, Dynein.NUM_HYDRO_SITES, ...
+                'PrimaryS');
+            obj.AtpSites(1:end) = false;
+            obj.AtpSites(1:val) = true;
         end
         
         % SecondaryS Get/Set
         function val = get.SecondaryS(obj)
-            val = obj.AtpSites(2);
+            val = sum(obj.AtpSites((Dynein.NUM_HYDRO_SITES + 1):end));
         end
         function obj = set.SecondaryS(obj, val)
-            obj.AtpSites(2) = val;
+            val = CNSUtils.bound(val, 0, Dynein.NUM_SECOND_SITES, ...
+                'SecondaryS');
+            iBegin = Dynein.NUM_HYDRO_SITES + 1;
+            obj.AtpSites(iBegin:end) = false;
+            obj.AtpSites(iBegin:val) = true;
         end
         
+        % AtpSites Setter
         function obj = set.AtpSites(obj, val)
-            disp(val)
-             if length(val) ~= 2
-                error('AtpSites should be a vector of length 2.');
+            if length(val) ~= obj.NUM_SITES
+                error('AtpSites must be a vector of length %d.', ...
+                    Dynein.NUM_SITES);
             end
-            if val(1) > obj.NUM_HYDRO_SITES
-                warning(['The number of bound ATPs at primary sites cannot'
-                         ' exceed NUM_HYDRO_SITES']);
-                val(1) = obj.NUM_HYDRO_SITES;
+            logicalVal = logical(val);
+            if ~all(val == logicalVal)
+                warning('AtpSites muct be a logical vector.');
+                val = logicalVal;
             end
-            if sum(val) > obj.NUM_SITES
-                warning(['The total number of bound ATPs cannot exceed'
-                         ' NUM_SITES']);
-                val(2) = obj.NUM_SITES - obj.NUM_HYDRO_SITES;
-            end
-            if ~all(val >= 0)
-                warning(['The number of bound ATPs cannot be less than'
-                         ' 0']);
-                val(val < 0) = 0;
-            end
-            disp(val)
             obj.AtpSites = val;
-        end % sel.AtpSites(obj)
+        end % set.AtpSites(obj, val)
         
+        % Add and remove order
+        function val = nextAtpOn(obj)
+            val = find(~obj.AtpSites, 1);
+        end
+        function val = nextAtpOff(obj)
+            val = find(obj.AtpSites, 1, 'last');
+        end
+        function val = nextAtpHydro(obj)
+            primarySites = obj.AtpSites(1:Dynein.NUM_HYDRO_SITES);
+            val = find(primarySites, 1, 'last');
+        end
+        
+        % Adders and removers
         function obj = bindAtp(obj)
-            if obj.PrimaryS < obj.NUM_HYDRO_SITES
-                obj.PrimaryS = obj.PrimaryS + 1;
-            elseif obj.S < obj.NUM_SITES
-                obj.SecondaryS = obj.SecondaryS + 1;
-            else
-                warning('Sites full, cannot bind another ATP');
+            nextOn = obj.nextAtpOn;
+            if isempty(nextOn)
+                warning('Sites full, cannot bind another ATP.');
             end
+            obj.AtpSites(nextOn) = true;
         end
         function obj = unbindAtp(obj)
-            if obj.SecondaryS > 0
-                obj.SecondaryS = obj.SecondaryS - 1;
-            elseif obj.PrimaryS > 0
-                obj.PrimaryS = obj.PrimaryS - 1;
-            else
-                warning('Sites empty, cannot unbind another ATP');
+            nextOff = obj.nextAtpOff;
+            if isempty(nextOff)
+                warning('Sites empty, cannot unbind another ATP.');
             end
+            obj.AtpSites(nextOff) = false;
         end
         function obj = hydrolyzeAtp(obj)
-            if obj.PrimaryS > 0
-                obj.PrimaryS = obj.PrimaryS - 1;
-            else
-                warning('Primary Sites Empty, cannot hydrolyze ATP');
+            nextHydro = obj.nextAtpHydro;
+            if isempty(nextHydro)
+                warning(['Primary sites empty, cannot '
+                    'hydrolyze another ATP.']);
             end
+            obj.AtpSites(nextHydro) = false;
         end
         
-        function val = nextAtpOn(obj)
-            if obj.PrimaryS < obj.NUM_HYDRO_SITES
-                val = obj.PrimaryS + 1;
-            elseif obj.S < obj.NUM_SITES
-                val = obj.S + 1;
-            else
-                val = 0;
-            end
-        end
+        % Rates Constants
         function val = kon(obj, atpConc, force)
             nextOn = nextAtpOn(obj);
-            kon0 = obj.K_ON_0(nextOn);
-            val = kon0 .* atpConc .* obj.loadfactor(force);
-        end
-        
-        function val = nextAtpOff(obj)
-            if obj.SecondaryS > 0
-                val = obj.NUM_HYDRO_SITES + obj.SecondaryS;
-            else
-                val = obj.S;
+            if isempty(nextOn)
+                val = 0;
+                return
             end
+            kon0 = Dynein.K_ON_0(nextOn);
+            s = obj.S;
+            if s <= Dynein.NUM_HYDRO_SITES
+                loadfactor = 1;
+            else
+                loadfactor = Dynein.loadfactor(force);
+            end
+            val = kon0 .* atpConc .* loadfactor;
         end
         function val = koff(obj, atpConc)
             nextOff = nextAtpOff(obj);
-            koff0 = obj.K_ON_0(nextOff);
+            if isempty(nextOff)
+                val = 0;
+                return
+            end
+            koff0 = Dynein.K_ON_0(nextOff);
             val = koff0 .* atpConc;
-        end    
+        end
+        function val = kcat(obj, force)
+            if isempty(obj.nextAtpHydro)
+                val = 0;
+                return;
+            end
+            s = obj.S;
+            prefactor = Dynein.HYDRO_PREFACTOR(s);
+            expTerm = exp(-Dynein.ALPHA .* force .* Dynein.stepsize(s) ...
+                ./ Dynein.KBT);
+            val = prefactor .* Dynein.K_CAT_0 .* expTerm;
+        end
+        function val = getRateArray(obj, atpConc, force)
+            val = [obj.kon(atpConc, force), ...
+                   obj.koff(atpConc), ...
+                   obj.kcat(force)];
+        end
+        
+        % stepping
+        function val = probabilityReverse(obj, force)
+            expTerm = exp(Dynein.BETA .* force .* obj.currentStepSize ...
+                          ./ Dynein.KBT);
+            val = Dynein.P_SYN_0 .* expTerm;
+            val(val > 1) = 1;
+        end
+        function attemptStep(obj)
+            
+        end
+        % state dependent calculations
+        function val = currentStepSize(obj)
+            s = obj.S;
+            val = Dynein.stepsize(s);
+        end
+
     end % methods
     
     methods (Static)
         function val = stepsize(s)
-            val = (Dynein.NUM_SITES - s) * Dynein.STEP_INCREMENT;
+            if s == 0, val = 0; return; end
+            val = Dynein.STEP_SIZE(s);
         end
         function val = loadfactor(force)
-            val = exp((force .* Dynein.D0 ./ (Dynenin.KBT)));
+            val = exp((force .* Dynein.D0 ./ (Dynein.KBT)));
         end
+        
     end % static methods
 end % Dynein class
