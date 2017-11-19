@@ -1,6 +1,15 @@
-function val = bound(val, min, max, name)
-%CHECKNUMBER Summary of this function goes here
-%   Detailed explanation goes here
+function X = bound(X, min, max, name)
+%BOUND Bound between a min and max.
+%
+%BOUND(X, min, max) will reduce all items in X greater than max to max,
+%and less than min to min. X can be a scalar, vector, or matrix. 
+%
+%BOUND(X, min, max, name) behaves as BOUND(X, min, max) but will also
+%display a warning message if truncating of values is necessary. name is a
+%char array or string used in the warning message.
+%
+%by Corban Swain, 2017
+
 switch nargin
     case 3
         warn = false;
@@ -9,19 +18,22 @@ switch nargin
     otherwise
         error('Unexpected number of arguments.');
 end
-lessThanMin = val < min;
-greaterThanMax = val > max;
+
+lessThanMin = X < min;
+greaterThanMax = X > max;
 
 if warn
-    if all(~lessThanMin)
-        warning('%s cannot be smaller than %d', name, min);
+    if any(lessThanMin)
+        warning('%s cannot be smaller than %d, truncating value(s).', ...
+                name, min);
     end
-    if all(~greaterThanMax)
-        warning('%s cannot be larger than %d', name, max);
+    if any(greaterThanMax)
+        warning('%s cannot be larger than %d, truncating value(s).', ...
+                name, max);
     end
 end
 
-val(lessThanMin) = min;
-val(greaterThanMax) = max;
+X(lessThanMin) = min;
+X(greaterThanMax) = max;
 end
 

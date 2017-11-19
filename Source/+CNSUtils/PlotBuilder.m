@@ -22,12 +22,12 @@ classdef PlotBuilder
     end
     methods
         function obj = set.X(obj, val)
-            obj.X = convert2cell(val);
+            obj.X = CNSUtils.convert2cell(val);
         end
         function obj = set.Y(obj, val)
-            obj.Y = convert2cell(val);
+            obj.Y = CNSUtils.convert2cell(val);
         end
-        function obj = PlotBuilder(X, Y)
+        function obj = CNSUtils.PlotBuilder(X, Y)
             if nargin == 2
                 obj.X = X;
                 obj.Y = Y;
@@ -89,7 +89,7 @@ classdef PlotBuilder
             if ~isempty(obj.LegendTitle)
                 title(legendHandle, obj.LegendTitle);
             end
-            legendHandle.LineWidth = obj.LineWidth;
+            legendHandle.LineWidth = obj.LegendLineWidth;
             legendHandle.Location = obj.LegendLocation;
         end
     end

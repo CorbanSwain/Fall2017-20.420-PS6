@@ -10,7 +10,7 @@ classdef FigureBuilder
         FigureHandle
     end % private properties
     methods
-        function figureHandle = figure(obj)
+        function [obj, figureHandle] = figure(obj)
             if ~isempty(obj.Number)
                 obj.FigureHandle = figure(obj.Number);
             else
@@ -39,7 +39,7 @@ classdef FigureBuilder
             if isempty(obj.FigureHandle)
                 figure(obj);
             end
-            FigureBuilder.saveFigure(obj.FigureHandle)
+            CNSUtils.FigureBuilder.saveFigure(obj.FigureHandle);
         end % function save(obj)
     end % methods
     
@@ -65,7 +65,7 @@ classdef FigureBuilder
                 if isempty(f.Name)
                     name = 'Untitled';
                 else
-                    name = figureHandle.Name;
+                    name = f.Name;
                 end
             else
                 if ~isempty(f.Name)
