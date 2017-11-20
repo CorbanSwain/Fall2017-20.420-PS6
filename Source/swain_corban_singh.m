@@ -51,7 +51,7 @@ figures{3} = @fig3;
                 nRepeats);
         parfor iRepeat = 1:nRepeats
 %             Dynein.calcCache
-            fprintf('%2d.', iRepeat);
+            fprintf('%3d.', iRepeat);
             [~, X] = simulate(nTrials, atpConcs, force, ...
                              STALL_TIME, SIM_TIME);
             for iTrial = 1:nTrials
@@ -87,7 +87,8 @@ figures{5} = @fig5;
         nAtpConcs = length(atpConcs);
         nRepeats = 10;
         velocities = zeros(nAtpConcs, nLoads, nRepeats);
-        simTime = 25; % s
+        simTime = 50; % s
+        stallTime = 5;
         fprintf('\tBeginning Simulation Loop, %d Repeats ...\n', ...
                 nRepeats);
         velocSlice = zeros(nLoads,nRepeats);
@@ -96,9 +97,9 @@ figures{5} = @fig5;
                 iAtpConc, nAtpConcs);
             atp = atpConcs(iAtpConc);
             parfor iRepeat = 1:nRepeats
-                fprintf('%2d.', iRepeat);    
+                fprintf('%3d.', iRepeat);    
                 [T, X] = simulate(nLoads, atp, loads, ...
-                                  simTime, simTime);
+                                  stallTime, simTime);
                 vss = zeros(nLoads, 1);
                 for iLoad = 1:nLoads
                     vss(iLoad) = X{iLoad}(end) ...
@@ -129,8 +130,8 @@ figures{5} = @fig5;
         pb.XLabel = 'Load (pN)';                
         pb.LineSpec = {'o-'};
         pb.MarkerFaceColor = {'w','w'};
-        pb.MarkerSize = {6, 6};
-        pb.LegendLabels = {'2 mM ATP', '100 \muM ATP'};
+        pb.MarkerSize = {8, 8};
+        pb.LegendLabels = {'100 \muM ATP', '2 mM ATP'};
         pb.LineWidth = {2.5, 2.5};
         pb.Box = 'on';
         
