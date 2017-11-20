@@ -79,7 +79,7 @@ figures{3} = @fig3;
     end % function fig3
 
 figures{5} = @fig5;
-    function fb = fig5
+    function fig5
         fignum = 5;
         loads = 0:0.05:1;
         atpConcs = [100e-6, 2e-3];
@@ -87,7 +87,7 @@ figures{5} = @fig5;
         nAtpConcs = length(atpConcs);
         nRepeats = 10;
         velocities = zeros(nAtpConcs, nLoads, nRepeats);
-        simTime = 50; % s
+        simTime = 10; % s
         stallTime = 5;
         fprintf('\tBeginning Simulation Loop, %d Repeats ...\n', ...
                 nRepeats);
@@ -142,25 +142,101 @@ figures{5} = @fig5;
         fb.PlotBuilders = pb;
     end
 
+figures{6} = @fig6;
+    function fb = fig6
+        fignum = 6;
+        loads = {0, 0.2, 0.4, 0.6}; % pN
+        c = [1, 2, 5] .* 1e-6; % M
+        atpConcs{1} = [c, ...
+                       c * 10, ...
+                       c * 100, ...
+                       c * 1e3];
+        atpConcs{2} = atpConcs{1};
+        atpConcs{3} = atpConcs{1}(5:end);
+        atpConcs{4} = atpConcs{1}(6:end);
+        
+        nLoads = length(loads);
+        nRepeats = 10;
+        
+        velocities = cell(1, nLoads);        
+        simTime = 20; % s
+        stallTime = 10; %s
+        fprintf('\tBeginning Simulation Loop, %d Repeats ...\n', ...
+                nRepeats);
+        for iLoad = 1:nLoads
+            fprintf('\tATP Concentration %d of %d ... \n', ...
+                iLoad, nLoads);
+            load = loads{iLoad};
+            atp = atpConcs{iLoad};
+            nSims = length(atp);
+            vSlice = zeros(nRepeats, nSims);
+            parfor iRepeat = 1:nRepeats
+                fprintf('%3d.', iRepeat);    
+                [T, X] = simulate(nSims, atp, load, ...
+                                  stallTime, simTime);
+                v = zeros(1, nSims);
+                for iSim = 1:nSims
+                    v(iSim) = X{iSim}(end) ./ T{iSim}(end);
+                end
+                vSlice(iRepeat, :) = v;
+            end
+            fprintf('\n');
+            velocities{iLoad} = vSlice;
+        end % main for loop
+        fprintf('\tDone!\n');
+        
+        pb = CNSUtils.PlotBuilder;
+        for iLoad = 1:nLoads
+            pb.X{iLoad} = atpConcs{iLoad} .* 1e6;
+            pb.Y{iLoad} = mean(velocities{iLoad}, 1);
+            pb.YError{iLoad} = std(velocities{iLoad}, 0, 1);
+        end
+        pb.YLabel = 'Velocity (nm/s)';
+        pb.YLim = [1e-2, 1e3];
+        pb.YScale = 'log';
+        pb.XLabel = 'ATP Concentration (pN)';  
+        pb.XLim = [0.5, 1e4];
+        pb.XScale = 'log';
+        pb.LineSpecCycleLength = 1;
+        pb.LineSpec = {'o-', 's-', '^-', 'p-'};
+        pb.MarkerFaceColor = {'w', 'w', 'w', 'w'};
+        pb.MarkerSize = {8, 8, 8, 8};
+        pb.LegendLabels = {'None', '0.2 pN', '0.4 pN', '0.6 pN'};
+        pb.LegendTitle = 'Load';
+        pb.LineWidth = {2.5, 2.5, 2.5, 2.5};
+        
+        fb = CNSUtils.FigureBuilder;
+        fb.Number = fignum;
+        fb.Name = sprintf(['%d - Average Velocity vs. ', ...
+                           'ATP Concentration'], ...
+                          fignum);
+        fb.Position = [];
+        fb.PlotBuilders = pb;
+    end % function fig 6
+
+
 
 %% Main Block
 
     function main
         CNSUtils.cleanup;
         fprintf('Beginning Script.\n');
+        
+        if isempty(gcp('nocreate'))
+            parpool('local');
+        end
+        
         CNSUtils.FigureBuilder.setDefaults;
-        figsToRun = [3 5];
-        Dynein.calcCache;
+        figsToRun = [6];
         for iFig = figsToRun
             fprintf('\nRunning Figure %d\n', iFig);
             fb = figures{iFig}();
             fb = figure(fb);
             save(fb); 
-        end
+        end % figure for loop
         fprintf('\nScript Complete!\n\n');
-    end
-tic
-main;
-toc
+    end % main
+
+tic; main; toc;
 end
 
