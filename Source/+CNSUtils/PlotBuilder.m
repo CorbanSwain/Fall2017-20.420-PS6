@@ -13,8 +13,8 @@ classdef PlotBuilder
         YScale = 'linear'
         XLabel
         YLabel
-        XLim = 'auto'
-        YLim = 'auto'
+        XLim
+        YLim
         LegendLabels
         LegendLineWidth = 1.5
         LegendLocation = 'best'
@@ -122,8 +122,22 @@ classdef PlotBuilder
                 ylabel(obj.YLabel);
             end
         end
-        xlim(obj.XLim);
-        ylim(obj.YLim);
+        
+        if ~isempty(obj.XLim)
+                xlim(obj.XLim);
+        end
+        
+        if ~isempty(obj.YLim)
+            if iscell(obj.YLim)
+                yyaxis left
+                ylim(obj.YLim{1});
+                yyaxis right
+                ylim(obj.YLim{2});
+            else
+                ylim(obj.YLim);
+            end
+        end
+
         if ~isempty(obj.LegendLabels)
             legendHandle = legend(obj.LegendLabels);
             if ~isempty(obj.LegendTitle)

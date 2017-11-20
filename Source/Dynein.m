@@ -6,7 +6,7 @@ classdef Dynein
     
     properties (Constant)
         SAVE_FMT = '%0.2E'
-        USE_CACHE = true;
+        USE_CACHE = false;
         
         % From Paper
         NUM_SITES =  SinghConstants.NUM_SITES
