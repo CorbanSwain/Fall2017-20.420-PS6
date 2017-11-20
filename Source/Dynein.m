@@ -5,6 +5,10 @@ classdef Dynein
     end % private properties
     
     properties (Constant)
+        SAVE_FMT = '%0.2E'
+        USE_CACHE = false;
+        
+        % From Paper
         NUM_SITES =  SinghConstants.NUM_SITES
         NUM_HYDRO_SITES = SinghConstants.NUM_HYDRO_SITES
         STEP_INCREMENT = SinghConstants.STEP_INCREMENT
@@ -132,10 +136,13 @@ classdef Dynein
         % Rates Constants
         function val = kon(obj, atpConc, force)
             nextOn = nextAtpOn(obj);
+            
             if isempty(nextOn)
                 val = 0;
-                return
+                return;
             end
+%             val = Dynein.calcCache([], 'kon', [nextOn, atpConc, force]);
+%             if ~isempty(val), return; end
             kon0 = Dynein.K_ON_0(nextOn);
             if nextOn > Dynein.NUM_HYDRO_SITES
                 loadfactor = Dynein.loadfactor(force);                
@@ -143,12 +150,13 @@ classdef Dynein
                 loadfactor = 1;
             end
             val = kon0 .* atpConc .* loadfactor;
+%             Dynein.calcCache(val, 'kon', [nextOn, atpConc, force]);
         end
         function val = koff(obj)
             nextOff = nextAtpOff(obj);
             if isempty(nextOff)
                 val = 0;
-                return
+                return;
             end
             koff0 = Dynein.K_OFF_0(nextOff);
             val = koff0;
@@ -159,24 +167,37 @@ classdef Dynein
                 return;
             end
             s = obj.S;
+%             val = Dynein.calcCache([], 'kcat', [s, force]);
+%             if ~isempty(val), return; end
             prefactor = Dynein.HYDRO_PREFACTOR(s);
             expTerm = exp(-Dynein.ALPHA .* force .* Dynein.stepsize(s) ...
                 ./ Dynein.KBT);
             val = prefactor .* Dynein.K_CAT_0 .* expTerm;
+%             Dynein.calcCache(val, 'kcat', [s, force]);
         end
         function val = getRates(obj, atpConc, force)
+            idStr = ['r' char(obj.AtpSites)];
+            idNums = [atpConc, force];
+            val = Dynein.calcCache([], idStr, idNums);
+            if ~isempty(val), return; end
             val = [obj.kon(atpConc, force), ...
                 obj.koff, ...
                 obj.kcat(force)];
+            Dynein.calcCache(val, idStr, idNums);
         end
         
         % stepping
         function val = probabilityReverse(obj, force)
             s = obj.S;
+            idStr = ['p' char(s)];
+            idNum = force;
+            val = Dynein.calcCache([], idStr, idNum);
+            if ~isempty(val), return; end
             expTerm = exp(Dynein.BETA .* force .* Dynein.stepsize(s) ...
                 ./ Dynein.KBT);
             val = Dynein.P_SYN_0 .* expTerm;
             val = CNSUtils.bound(val, 0, 1);
+            Dynein.calcCache(val, idStr, idNum);
         end
         function obj = step(obj)
             obj.Position = obj.Position + Dynein.stepsize(obj.S);
@@ -233,9 +254,32 @@ classdef Dynein
             if s == 0, val = 0; return; end
             val = Dynein.STEP_SIZE(s);
         end
+        
         function val = loadfactor(force)
             val = exp((force .* Dynein.D0 ./ Dynein.KBT));
         end
         
+        function value = calcCache(value, keyStr, keyNums)
+            if Dynein.USE_CACHE
+                persistent dyneinCalcCache
+                if ~nargin
+                    % initialization
+                    dyneinCalcCache = containers.Map;
+                    return;
+                end
+                key = [keyStr, sprintf(Dynein.SAVE_FMT, keyNums)];
+                if isempty(value)
+                    if isKey(dyneinCalcCache, key)
+                        %                     fprintf('Loading Saved Value!\n');
+                        value = dyneinCalcCache(key);
+                    end
+                    return;
+                else
+                    dyneinCalcCache(key) = value;
+                end
+            else
+                value = [];
+            end % check if using cache
+        end % calcCache function
     end % static methods
 end % Dynein class

@@ -19,6 +19,7 @@ classdef PlotBuilder
         LegendLineWidth = 1.5
         LegendLocation = 'best'
         LegendTitle
+        YError
     end
     methods
         function obj = set.X(obj, val)
@@ -55,6 +56,8 @@ classdef PlotBuilder
                 % shorter cell arrays then vars.
                 p = plot(obj.X{i}, obj.Y{i}, obj.LineSpec{lineSpecIndex});
                 if i == 1, axes = p.Parent; end
+                hold(axes,'on');
+                p.AlignVertexCenters = 'on';
                 
                 if ~isempty(obj.ColorOrderCycleLength)
                     if (mod(i, obj.ColorOrderCycleLength) == 0)
@@ -72,8 +75,16 @@ classdef PlotBuilder
                     name = plotSettingNames{iSetting};
                     propertyVal = obj.(name);
                     if ~isempty(propertyVal) && ~isempty(propertyVal{i})
-                        p.(name) = propertyVal;
+                        p.(name) = propertyVal{i};
                     end
+                end
+                
+                if ~isempty(obj.YError) && ~isempty(obj.YError{i})
+                    e = errorbar(axes, obj.X{i}, obj.Y{i}, obj.YError{i});
+                    e.LineStyle = 'none';
+                    e.Color = p.Color;
+                    e.LineWidth = p.LineWidth;
+                    e.AlignVertexCenters = 'on';
                 end
            
             end

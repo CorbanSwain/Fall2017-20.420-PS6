@@ -4,109 +4,94 @@ function swain_corban_singh
 
 
 %% Global Variables
-stallTime = 1; % s
-simTime = 4; % s
+STALL_TIME = 1; % s
+SIM_TIME = 4; % s
 
 
 
 %% Figures
+
 figures{2} = @fig2;
     function fb = fig2
         fignum = 2;
         atpConcs = [1e-3, 400e-6];
         nTrials = length(atpConcs);
-        
-        T = zeros(1e5, nTrials);
-        X = T;
-        dyneins(1,nTrials) = Dynein;
-        
-        continueSim = true(1, nTrials);
-        i = 1;
-        % FIXME - this is very unclear
-        while any(continueSim)
-            simXs = X(:,continueSim);
-            simTs = T(:,continueSim);
-            simDyneins = dyneins(continueSim);
-            
-            simForces = SinghConstants.restoringForce(simXs(i,:));
-            simAtpConcs = atpConcs(continueSim);
-            
-            [simDyneins, dt] = simDyneins.update(simAtpConcs, simForces);
-            
-            i = i + 1;
-            simTs(i,:) = dt + simTs((i - 1), :);
-            simXs(i,:) = [simDyneins.Position];
-            simContinueSim = shouldContinueSim(simTs,simXs, i);
-            
-%             fprintf('Force %13.5f\n', simForces(1));
-%             disp(simDyneins(1));
-            T(:,continueSim) = simTs;
-            X(:,continueSim) = simXs;
-            dyneins(continueSim) = simDyneins;
-            continueSim(continueSim) = simContinueSim;
-        end % while simulation loop
+        [T, X] = simulate(nTrials, atpConcs, ...
+                          @SinghConstants.restoringForce, ...
+                          STALL_TIME, SIM_TIME);
         
         pb = CNSUtils.PlotBuilder;
-        pb.X = cell(1, nTrials);
-        pb.Y = pb.X;
-        for iTrial = 1:nTrials
-            lengthSim = find(T(2:end, iTrial) == 0, 1);
-            pb.X{iTrial} = T(1:lengthSim, iTrial);
-            pb.Y{iTrial} = X(1:lengthSim, iTrial);
-        end
+        pb.X = T;
+        pb.Y = X;
+        
+        pb.X{2} = pb.X{2} + 0.5;
         pb.YLabel = 'Position (nm)';
         pb.XLabel = 'Time(s)';
+        pb.XLim = [0 4];
         pb.LegendLabels = {'1 mM ATP', '400 \muM ATP'};
         
         fb = CNSUtils.FigureBuilder;
         fb.Number = fignum;
-        fb.Name = sprintf('Typical Dynein Simulations');
+        fb.Name = sprintf('%d - Typical Dynein Simulations', fignum);
         fb.PlotBuilders = pb;   
     end % function fig2
 
+figures{3} = @fig3;
+    function fb = fig3
+        fignum = 3;
+        atpConcs = [(1:10) .* 100e-6, (1.5:0.5:4) .* 1e-3]; % M
+        force = @SinghConstants.restoringForce;
+        nTrials = length(atpConcs);
+        nRepeats = 50;
+        stallForce = zeros(nRepeats, nTrials);
+        fprintf('\tBeginning Simulation Loop, %d Repeats ...\n', ...
+                nRepeats);
+        parfor iRepeat = 1:nRepeats
+%             Dynein.calcCache
+            fprintf('%2d.', iRepeat);
+            [~, X] = simulate(nTrials, atpConcs, force, ...
+                             STALL_TIME, SIM_TIME);
+            for iTrial = 1:nTrials
+                stallForce(iRepeat,iTrial) = force(X{iTrial}(end));
+            end % loop through trials
+        end % repeat experiment loop
+        fprintf('\n\tDone!\n');
+        pb = CNSUtils.PlotBuilder;
+        pb.X{1} = atpConcs .* 1e6; % uM
+        pb.Y{1} = mean(stallForce);
+        pb.YError{1} = std(stallForce, 0, 1);
+        pb.XLabel = 'ATP Concentration (\muM)';
+        pb.YLabel = 'Stall Force (pN)';
+        pb.LineSpec = {'o-'};
+        pb.MarkerSize = {6};
+        pb.MarkerFaceColor = 'w';
+        
+        fb = CNSUtils.FigureBuilder;
+        fb.Number = fignum;
+        fb.Name = sprintf('%d - Stalling Force vs ATP Concentration', ...
+                          fignum);
+        fb.PlotBuilders = pb;
+    end % function fig3
 
 
-%% Functions
-    function val = shouldContinueSim(T, X, last)
-        T = T(1:last,:);
-        X = X(1:last,:);
-        nTrials = size(T, 2);
-        val = true(1, nTrials);
-        for i = 1:nTrials
-            t = T(:,i);
-            if t(end) > simTime
-                val(i) = false;
-            else
-                x = X(:,i);
-                stallTimePoint = t(end) - stallTime;
-                if stallTimePoint > 0
-                    iCheck = find(t > stallTimePoint, 1);
-                    xCheck = x(iCheck);
-                    if ~isempty(xCheck)
-                        if abs(xCheck - x(end)) < eps
-                            val(i) = false;
-                        end
-                    end % checking empty
-                end % stall time point
-            end % checking simTime
-        end % for
-    end % function stopCriterion(...)
 
+%% Main Block
 
-
-%% Main
     function main
-        CNSUtils.cleanup;
+        % CNSUtils.cleanup;
         % close all;
         CNSUtils.FigureBuilder.setDefaults;
-        figsToRun = 2;
+        figsToRun = 3;
+        Dynein.calcCache;
         for iFig = figsToRun
+            fprintf('\nRunning Figure %d\n', iFig);
             fb = figures{iFig}();
             fb = figure(fb);
-            save(fb);
+            save(fb); 
         end
     end
-
+tic
 main;
+toc
 end
 
