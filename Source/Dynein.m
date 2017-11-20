@@ -6,7 +6,7 @@ classdef Dynein
     
     properties (Constant)
         SAVE_FMT = '%0.2E'
-        USE_CACHE = false;
+        USE_CACHE = true;
         
         % From Paper
         NUM_SITES =  SinghConstants.NUM_SITES
@@ -266,6 +266,9 @@ classdef Dynein
                     % initialization
                     dyneinCalcCache = containers.Map;
                     return;
+                end
+                if ~isa(dyneinCalcCache, 'containers.Map')
+                    dyneinCalcCache = containers.Map;
                 end
                 key = [keyStr, sprintf(Dynein.SAVE_FMT, keyNums)];
                 if isempty(value)

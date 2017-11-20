@@ -29,9 +29,10 @@ classdef FigureBuilder
                        'for the number of plots.']);
             end
             for iPlot = 1:length(obj.PlotBuilders)
-                subplot(obj.SubplotSize(1), obj.SubplotSize(2), iPlot);
+                ax = subplot(obj.SubplotSize(1), ...
+                             obj.SubplotSize(2), iPlot);
                 hold on;
-                plot(obj.PlotBuilders(iPlot));
+                plot(obj.PlotBuilders(iPlot), ax);
             end
         end % function figure(obj)
         
@@ -39,7 +40,7 @@ classdef FigureBuilder
             if isempty(obj.FigureHandle)
                 figure(obj);
             end
-            CNSUtils.FigureBuilder.saveFigure(obj.FigureHandle);
+            obj.saveFigure(obj.FigureHandle);
         end % function save(obj)
     end % methods
     

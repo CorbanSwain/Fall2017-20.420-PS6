@@ -30,7 +30,8 @@ end
 
 
 %% Setup
-tempT = zeros(1e5, nTrials);
+preAllocLength = 1e3 .* simTime;
+tempT = zeros(preAllocLength, nTrials);
 tempX = tempT;
 dyneins(1,nTrials) = Dynein;
 continueSim = true(1, nTrials);

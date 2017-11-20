@@ -10,9 +10,9 @@ classdef PlotBuilder
         LineWidth % setter update cell length
         Grid = 'off'
         XScale = 'linear'
-        YScale = 'Linear'
-        XLabel = 'x'
-        YLabel = 'y'
+        YScale = 'linear'
+        XLabel
+        YLabel
         XLim = 'auto'
         YLim = 'auto'
         LegendLabels
@@ -20,6 +20,8 @@ classdef PlotBuilder
         LegendLocation = 'best'
         LegendTitle
         YError
+        AxisAssignment
+        Box = 'off'
     end
     methods
         function obj = set.X(obj, val)
@@ -35,7 +37,7 @@ classdef PlotBuilder
             end
         end
         
-        function plot(obj)
+        function plot(obj, axes)
             if isempty(obj.Y)
                 error('Y-Values must be passed to build a plot.');
             end
@@ -48,16 +50,40 @@ classdef PlotBuilder
             if  nYVals ~= length(obj.X)
                 error('x and y cell arrays have mismatched dimensions.');
             end
+            if nargin == 1
+                figure; clf;
+                axes = subplot(1, 1, 1);                
+            end
+            box(axes, obj.Box); 
             plotSettingNames = {'MarkerSize','MarkerFaceColor', ...
                                 'LineWidth'};
             lineSpecIndex = 1;
             for i = 1:nYVals
                 % FIXME - maybe functionalize this more? Be able to take in
                 % shorter cell arrays then vars.
-                p = plot(obj.X{i}, obj.Y{i}, obj.LineSpec{lineSpecIndex});
-                if i == 1, axes = p.Parent; end
+                if ~isempty(obj.AxisAssignment)
+                    % FIXME - Check obj.AxisAssignment has length equal to
+                    % nYVals
+                    if obj.AxisAssignment(i) == 1
+                        yyaxis left
+                    else
+                        yyaxis right
+                    end
+                    % FIXME - handle incorrectly formatted axes assignment
+                    % value
+                end
+               
+                if ~isempty(obj.YError) && ~isempty(obj.YError{i})
+                    h = errorbar(axes, obj.X{i}, obj.Y{i}, ...
+                                 obj.YError{i}, ...
+                                 obj.LineSpec{lineSpecIndex});                    
+                else
+                    h = plot(axes, obj.X{i}, obj.Y{i}, ...
+                             obj.LineSpec{lineSpecIndex});
+                end
+               
                 hold(axes,'on');
-                p.AlignVertexCenters = 'on';
+                h.AlignVertexCenters = 'on';
                 
                 if ~isempty(obj.ColorOrderCycleLength)
                     if (mod(i, obj.ColorOrderCycleLength) == 0)
@@ -75,24 +101,27 @@ classdef PlotBuilder
                     name = plotSettingNames{iSetting};
                     propertyVal = obj.(name);
                     if ~isempty(propertyVal) && ~isempty(propertyVal{i})
-                        p.(name) = propertyVal{i};
+                        h.(name) = propertyVal{i};
                     end
                 end
-                
-                if ~isempty(obj.YError) && ~isempty(obj.YError{i})
-                    e = errorbar(axes, obj.X{i}, obj.Y{i}, obj.YError{i});
-                    e.LineStyle = 'none';
-                    e.Color = p.Color;
-                    e.LineWidth = p.LineWidth;
-                    e.AlignVertexCenters = 'on';
-                end
-           
+                           
             end
         grid(axes, obj.Grid);
         axes.XScale = obj.XScale;
         axes.YScale = obj.YScale;
-        xlabel(obj.XLabel);
-        ylabel(obj.YLabel);
+        if ~isempty(obj.XLabel)
+            xlabel(obj.XLabel);
+        end
+        if ~isempty(obj.YLabel)
+            if iscell(obj.YLabel)
+                yyaxis left
+                ylabel(obj.YLabel{1});
+                yyaxis right
+                ylabel(obj.YLabel{2});
+            else
+                ylabel(obj.YLabel);
+            end
+        end
         xlim(obj.XLim);
         ylim(obj.YLim);
         if ~isempty(obj.LegendLabels)
