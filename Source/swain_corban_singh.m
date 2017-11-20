@@ -16,7 +16,7 @@ figures{2} = @fig2;
         fignum = 2;
         atpConcs = [1e-3, 400e-6];
         nTrials = length(atpConcs);
-        fprintf('\tBeginnning Simulations ... ')
+        fprintf('\tBeginnning Simulations ... ');
         [T, X] = simulate(nTrials, atpConcs, ...
                           @SinghConstants.restoringForce, ...
                           STALL_TIME, SIM_TIME);
@@ -79,7 +79,7 @@ figures{3} = @fig3;
     end % function fig3
 
 figures{5} = @fig5;
-    function fig5
+    function fb = fig5
         fignum = 5;
         loads = 0:0.05:1;
         atpConcs = [100e-6, 2e-3];
@@ -88,7 +88,7 @@ figures{5} = @fig5;
         nRepeats = 10;
         velocities = zeros(nAtpConcs, nLoads, nRepeats);
         simTime = 10; % s
-        stallTime = 5;
+        stallTime = 8;
         fprintf('\tBeginning Simulation Loop, %d Repeats ...\n', ...
                 nRepeats);
         velocSlice = zeros(nLoads,nRepeats);
@@ -159,8 +159,8 @@ figures{6} = @fig6;
         nRepeats = 10;
         
         velocities = cell(1, nLoads);        
-        simTime = 20; % s
-        stallTime = 10; %s
+        simTime = 10; % s
+        stallTime = 8; %s
         fprintf('\tBeginning Simulation Loop, %d Repeats ...\n', ...
                 nRepeats);
         for iLoad = 1:nLoads
@@ -210,7 +210,7 @@ figures{6} = @fig6;
         fb.Name = sprintf(['%d - Average Velocity vs. ', ...
                            'ATP Concentration'], ...
                           fignum);
-        fb.Position = [];
+        fb.Position = [844 87 640 392];
         fb.PlotBuilders = pb;
     end % function fig 6
 
@@ -227,12 +227,12 @@ figures{6} = @fig6;
         end
         
         CNSUtils.FigureBuilder.setDefaults;
-        figsToRun = [6];
+        figsToRun = [2, 3, 5, 6];
         for iFig = figsToRun
             fprintf('\nRunning Figure %d\n', iFig);
             fb = figures{iFig}();
             fb = figure(fb);
-            save(fb); 
+%             save(fb); 
         end % figure for loop
         fprintf('\nScript Complete!\n\n');
     end % main

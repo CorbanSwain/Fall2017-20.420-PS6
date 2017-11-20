@@ -73,7 +73,7 @@ classdef FigureBuilder
                     name = [name, '-', f.Name];
                 end
             end
-            filename = ['Figures' filesep name];
+            filename = ['Figures', filesep, name, '.png'];
             print(f,filename,'-dpng','-r300');
         end % saveFigure()
         
