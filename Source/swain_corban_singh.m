@@ -4,8 +4,16 @@ function swain_corban_singh
 
 
 %% Global Variables
-STALL_TIME = 1; % s
-SIM_TIME = 4; % s
+
+% Figures 2 and 3
+STALL_TIMES(1) = 1; % s
+SIM_TIMES(1) =   4; % s
+
+% Figures 5 and 6
+STALL_TIMES(2) = 50; % Set both of these values to 50 seconds to recreate 
+SIM_TIMES(2) =   50; % figures more closely; this will take a while 
+                     % (about 20 min) with my code though
+
 
 
 
@@ -19,7 +27,7 @@ figures{2} = @fig2;
         fprintf('\tBeginnning Simulations ... ');
         [T, X] = simulate(nTrials, atpConcs, ...
                           @SinghConstants.restoringForce, ...
-                          STALL_TIME, SIM_TIME);
+                          STALL_TIMES(1), SIM_TIMES(1));
         fprintf('Done!\n');
         
         pb = CNSUtils.PlotBuilder;
@@ -42,6 +50,8 @@ figures{2} = @fig2;
 figures{3} = @fig3;
     function fb = fig3
         fignum = 3;
+        stallTime = STALL_TIMES(1);
+        simTime = 20; % FIXME!!
         atpConcs = [(1:10) .* 100e-6, (1.5:0.5:4) .* 1e-3]; % M
         force = @SinghConstants.restoringForce;
         nTrials = length(atpConcs);
@@ -53,7 +63,7 @@ figures{3} = @fig3;
 %             Dynein.calcCache
             fprintf('%3d.', iRepeat);
             [~, X] = simulate(nTrials, atpConcs, force, ...
-                             STALL_TIME, SIM_TIME);
+                              stallTime, simTime);
             for iTrial = 1:nTrials
                 stallForce(iRepeat,iTrial) = force(X{iTrial}(end));
             end % loop through trials
@@ -87,8 +97,8 @@ figures{5} = @fig5;
         nAtpConcs = length(atpConcs);
         nRepeats = 10;
         velocities = zeros(nAtpConcs, nLoads, nRepeats);
-        simTime = 10; % s
-        stallTime = 8;
+        simTime = SIM_TIMES(2); % s
+        stallTime = STALL_TIMES(2);
         fprintf('\tBeginning Simulation Loop, %d Repeats ...\n', ...
                 nRepeats);
         velocSlice = zeros(nLoads,nRepeats);
@@ -159,12 +169,12 @@ figures{6} = @fig6;
         nRepeats = 10;
         
         velocities = cell(1, nLoads);        
-        simTime = 10; % s
-        stallTime = 8; %s
+        simTime = SIM_TIMES(2); % s
+        stallTime = STALL_TIMES(2); %s
         fprintf('\tBeginning Simulation Loop, %d Repeats ...\n', ...
                 nRepeats);
         for iLoad = 1:nLoads
-            fprintf('\tATP Concentration %d of %d ... \n', ...
+            fprintf('\tApplied Load %d of %d ... \n', ...
                 iLoad, nLoads);
             load = loads{iLoad};
             atp = atpConcs{iLoad};
@@ -219,23 +229,30 @@ figures{6} = @fig6;
 %% Main Block
 
     function main
-        CNSUtils.cleanup;
+        CNSUtils.cleanup
+        
         fprintf('Beginning Script.\n');
         
         if isempty(gcp('nocreate'))
-            parpool('local');
+            pool = parpool('local');
+        else
+            pool = gcp;
         end
         
         CNSUtils.FigureBuilder.setDefaults;
+        
         figsToRun = [2, 3, 5, 6];
         for iFig = figsToRun
             fprintf('\nRunning Figure %d\n', iFig);
             fb = figures{iFig}();
-            fb = figure(fb);
-%             save(fb); 
+            [~, fh] = figure(fb);
+            figure(fh);
         end % figure for loop
+        
+        delete(pool);
+        
         fprintf('\nScript Complete!\n\n');
-    end % main
+    end % main function
 
 tic; main; toc;
 end

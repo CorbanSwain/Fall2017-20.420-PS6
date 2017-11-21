@@ -30,7 +30,7 @@ end
 
 
 %% Setup
-preAllocLength = 1e3 .* simTime;
+preAllocLength = 7e2 .* simTime;
 tempT = zeros(preAllocLength, nTrials);
 tempX = tempT;
 dyneins(1,nTrials) = Dynein;
@@ -78,11 +78,16 @@ end % while simulation loop
 %% Trimming Simulation Timecourses
 T = cell(1, nTrials);
 X = T;
+% debugCache = zeros(1, nTrials);
 for iTrial = 1:nTrials
     lengthSim = find(tempT(2:end, iTrial) == 0, 1);
     T{iTrial} = tempT(1:lengthSim, iTrial);
     X{iTrial} = tempX(1:lengthSim, iTrial);
+%     debugCache(iTrial) = lengthSim;
 end
+% fprintf('\n***** Preallocation Effeciency: %6.2f +/- %6.2f *****\n', ...
+%          100 * mean(debugCache ./ preAllocLength), ...
+%          100 * std(debugCache  ./ preAllocLength));
 end
 
 function val = shouldContinueSim(T, X, last, stallTime, simTime)
