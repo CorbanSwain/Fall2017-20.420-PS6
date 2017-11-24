@@ -3,16 +3,16 @@ function swain_corban_singh
 
 
 
-%% Global Variables
+%% Global Constants
 
 % Figures 2 and 3
 STALL_TIMES(1) = 1; % s
 SIM_TIMES(1) =   4; % s
 
 % Figures 5 and 6
-STALL_TIMES(2) = 50; % Set both of these values to 50 seconds to recreate 
-SIM_TIMES(2) =   50; % figures more closely; this will take a while 
-                     % (about 20 min) with my code though
+STALL_TIMES(2) = 10; % Set both of these values to 50 seconds to recreate 
+SIM_TIMES(2) =   10; % figures more closely; this will take a while 
+                     % (about 45 min) with my code though.
 
 
 
@@ -51,7 +51,7 @@ figures{3} = @fig3;
     function fb = fig3
         fignum = 3;
         stallTime = STALL_TIMES(1);
-        simTime = 20; % FIXME!!
+        simTime = SIM_TIMES(1);
         atpConcs = [(1:10) .* 100e-6, (1.5:0.5:4) .* 1e-3]; % M
         force = @SinghConstants.restoringForce;
         nTrials = length(atpConcs);
@@ -60,7 +60,6 @@ figures{3} = @fig3;
         fprintf('\tBeginning Simulation Loop, %d Repeats ... \n', ...
                 nRepeats);
         parfor iRepeat = 1:nRepeats
-%             Dynein.calcCache
             fprintf('%3d.', iRepeat);
             [~, X] = simulate(nTrials, atpConcs, force, ...
                               stallTime, simTime);

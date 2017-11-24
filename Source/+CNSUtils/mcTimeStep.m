@@ -6,6 +6,7 @@ function dt = mcTimeStep(rates)
 if ~isvector(rates)
     error('rates must be a vector.')
 end
-dt = random('exp', 1 / sum(rates));
+dt = -log(rand) / sum(rates);
+%dt = random('exp', 1 / sum(rates));
 end
 

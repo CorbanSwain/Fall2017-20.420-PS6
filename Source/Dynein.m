@@ -1,13 +1,16 @@
 classdef Dynein
+% DYNEIN A class representing a dynein motor.    
+    
+    
+    
     properties (SetAccess = 'private')
         AtpSites
         Position = 0;
     end % private properties
     
-    properties (Constant)
-        SAVE_FMT = '%0.2E'
-        USE_CACHE = false;
-        
+    
+    
+    properties (Constant)        
         % From Paper
         NUM_SITES =  SinghConstants.NUM_SITES
         NUM_HYDRO_SITES = SinghConstants.NUM_HYDRO_SITES
@@ -37,13 +40,18 @@ classdef Dynein
         HYDRO_PREFACTOR = [1e-2, ones(1, Dynein.NUM_SECOND_SITES)]
         
         BETA = 1 - Dynein.ALPHA;
+        
     end % constant properties
+    
+    
     
     properties (Dependent)
         S
         PrimaryS
         SecondaryS
     end % dependent properties
+    
+    
     
     methods
         function obj = Dynein

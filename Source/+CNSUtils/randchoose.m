@@ -15,10 +15,12 @@ if length(weights) == 1
     weights = [weights, (1 - weights)];
     probs = weights;
 else
+    % skip this step, do only save the sum as a var and divide only as many
+    % times as needed
     probs = weights ./ sum(weights, 2);
 end
 nWeightSets = size(weights, 1);
-cumSumProbs = cumsum(probs, 2);
+% cumSumProbs = cumsum(probs, 2);
 nChoices = size(probs, 1) * nTimes;
 randomVar = rand(1, nChoices);
 choice = zeros(nWeightSets, nTimes);
@@ -27,8 +29,17 @@ for iChoice = 1:nChoices
     iProb = iProb + 1;
     iProb(iProb > nWeightSets) = 1;
     r =  randomVar(iChoice);
-    cs = cumSumProbs(iProb, :);
-    choice(iChoice) = find(r < cs, 1);
+    counter = 0;
+    singleChoice = 0;
+    cs = 0;
+    while ~singleChoice
+        counter = counter + 1;
+        cs = cs + probs(iProb, counter);
+        if r < cs, singleChoice = counter; end 
+    end
+    choice(iChoice) = singleChoice;
+%     cs = cumSumProbs(iProb, :);
+%     choice(iChoice) = find(r < cs, 1);
 end
 if binary
     choice = (choice == 1);

@@ -64,9 +64,7 @@ while any(continueSim)
     simXs(iStep,:) = [simDyneins.Position];
     simContinueSim = shouldContinueSim(simTs,simXs, iStep, ...
         stallTime, simTime);
-    
-    %             fprintf('Force %13.5f\n', simForces(1));
-    %             disp(simDyneins(1));
+
     tempT(:,continueSim) = simTs;
     tempX(:,continueSim) = simXs;
     dyneins(continueSim) = simDyneins;
@@ -78,17 +76,14 @@ end % while simulation loop
 %% Trimming Simulation Timecourses
 T = cell(1, nTrials);
 X = T;
-% debugCache = zeros(1, nTrials);
 for iTrial = 1:nTrials
     lengthSim = find(tempT(2:end, iTrial) == 0, 1);
     T{iTrial} = tempT(1:lengthSim, iTrial);
     X{iTrial} = tempX(1:lengthSim, iTrial);
-%     debugCache(iTrial) = lengthSim;
 end
-% fprintf('\n***** Preallocation Effeciency: %6.2f +/- %6.2f *****\n', ...
-%          100 * mean(debugCache ./ preAllocLength), ...
-%          100 * std(debugCache  ./ preAllocLength));
-end
+end % function simulate
+
+
 
 function val = shouldContinueSim(T, X, last, stallTime, simTime)
 T = T(1:last,:);
@@ -113,4 +108,4 @@ for i = 1:nTrials
         end % stall time point
     end % checking simTime
 end % for
-end % function stopCriterion(...)
+end % function shouldContinueSim(...)
