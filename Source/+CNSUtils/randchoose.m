@@ -12,16 +12,18 @@ if length(weights) == 1
         error('A single weight must be a probability, 0 <= p <= 1.')
     end
     binary = true;
-    weights = [weights, (1 - weights)];
-    probs = weights;
+    probs = [weights, (1 - weights)];
 else
-    % skip this step, do only save the sum as a var and divide only as many
-    % times as needed
-    probs = weights ./ sum(weights, 2);
+    if any(isinf(weights))
+        infTerms = (weights == Inf);
+        weights(:) = 0;
+        weights(infTerms) = 1;
+    end
+    wSum = sum(weights);
+    probs = weights / wSum;
 end
 nWeightSets = size(weights, 1);
-% cumSumProbs = cumsum(probs, 2);
-nChoices = size(probs, 1) * nTimes;
+nChoices = nWeightSets * nTimes;
 randomVar = rand(1, nChoices);
 choice = zeros(nWeightSets, nTimes);
 iProb = 0;
@@ -38,8 +40,6 @@ for iChoice = 1:nChoices
         if r < cs, singleChoice = counter; end 
     end
     choice(iChoice) = singleChoice;
-%     cs = cumSumProbs(iProb, :);
-%     choice(iChoice) = find(r < cs, 1);
 end
 if binary
     choice = (choice == 1);
