@@ -1,7 +1,7 @@
 classdef ModConstants
     properties (Constant)
-        ETA = 6E3 % pN s / nm^2
-        R_VES = 65 % nm
+        ETA = 6E-9 % pN s / nm^2 (6 centiPoise)
+        R_VES = 75 / 2 % nm, vessicle radius
         L_DYN = 35 % nm
         MEM_AREA_DENSITY = 4.23E-24 % mol membrane / nm^2
         K_D_MEM_DYN = 6E3 % pM
@@ -49,11 +49,12 @@ classdef ModConstants
                     else
                         % Find this derivation by looking through the
                         % equation helper
-                        val(i) = -(65.*pi.*(d(i).^2 - 130.*d(i) + 3000))./d(i);
+                        val(i) = -(75.*pi.*(4.*d(i).^2 - 300.*d(i) ... 
+                                            + 725))./(8.*d(i));
                     end
                 end
             else
-                val = -(65.*pi.*(d.^2 - 130.*d + 3000))./d;
+                val = -(75.*pi.*(4.*d.^2 - 300.*d + 725))./(8.*d);
             end
         end
         
@@ -87,15 +88,13 @@ classdef ModConstants
                     else
                         % Find this derivation by looking through the
                         % equation helper
-                        val(i) = -(pi.*(d(i) - 30).^2 ...
-                            .*(d(i).^2 + 60.*d(i) - 30000)) ...
-                            ./(12.*d(i));
+                        val(i) = 1.7959E5 - (pi.*(d(i) - 145./2).^2 ...
+                            .*(d(i).^2 + 145.*d(i) - 75./4))./(12.*d(i));
                     end
                 end
             else
-                val = -(pi.*(d - 30).^2 ...
-                    .*(d.^2 + 60.*d - 30000)) ...
-                    ./(12.*d);
+                val = 1.7959E5 - (pi.*(d - 145./2).^2 ...
+                    .*(d.^2 + 145.*d - 75./4))./(12.*d);
             end
         end
         

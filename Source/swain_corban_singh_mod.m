@@ -9,18 +9,17 @@ function swain_corban_singh_mod
 %% Figures
 figures{11} = @testfig1;
     function fb = testfig1
-        dt = 1E-2;
-        nSteps = 1e6;
-%         pos = zeros(2, nSteps);
-        
+        dt = 1000;
+        nSteps = 1e5;
+        pos = zeros(nSteps, 2); 
         for iStep = 2:nSteps
-%             prevPos = pos(:, iStep - 1); 
-%             pos(:,iStep) = rand_walk(prevPos, ModConstants.D, dt);
-            prevPos = rand_walk(prevPos, ModConstants.D, dt);
+            prevPos = pos(iStep - 1, :); 
+            pos(iStep, :) = rand_walk(prevPos, ModConstants.D, dt, ...
+                [0 10], [0 10]);
         end
         pb = CNSUtils.PlotBuilder;
-        pb.X = pos(1,[1, end]);
-        pb.Y = pos(2,[1, end]);
+        pb.X = pos(:, 1);
+        pb.Y = pos(:, 2);
         
         fb = CNSUtils.FigureBuilder;
         fb.Number = 1;
@@ -57,7 +56,7 @@ figures{12} = @testfig2;
 
     function main
         CNSUtils.FigureBuilder.setDefaults;
-        figure(figures{12}());
+        figure(figures{11}());
     end % function main
 
 tic; main; toc;

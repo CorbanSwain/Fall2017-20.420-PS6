@@ -14,6 +14,7 @@ if length(weights) == 1
     binary = true;
     probs = [weights, (1 - weights)];
 else
+    % FIXME - reject negative inputs and infinites 
     if any(isinf(weights))
         infTerms = (weights == Inf);
         weights(:) = 0;
