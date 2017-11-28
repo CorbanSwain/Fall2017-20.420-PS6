@@ -5,7 +5,11 @@ classdef ModConstants
         L_DYN = 35 % nm
         MEM_AREA_DENSITY = 4.23E-24 % mol membrane / nm^2
         K_D_MEM_DYN = 6E3 % pM
+        K_OFF_MEM_DYN = 0.1 % 1 / s
+        K_ON_MEM_DYN = 690; % 1 / (s * M)
         
+        SIM_X_LIM = [0 Inf]; % nm
+        SIM_Y_LIM = [0 2e3]; % nm
         
         ZETA = 6 * pi * ModConstants.ETA * ModConstants.R_VES % pN s / nm
         D = SinghConstants.KBT / ModConstants.ZETA % nm^2 / s
@@ -98,6 +102,7 @@ classdef ModConstants
             end
         end
         
+        % FIXME - should this function be capitalized?
         function val = memConc(d)
             % Effective concentration of membrane in proximity to dynein
             %
@@ -117,6 +122,10 @@ classdef ModConstants
                         ./ ModConstants.VD_EFF(d(i), false) * 1e24;
                 end
             end
+        end
+        
+        function val = K_ON_EFF(d)
+            val = ModConstants.memConc(d) .* ModConstants.K_ON_MEM_DYN;
         end
         
         function equationHelper

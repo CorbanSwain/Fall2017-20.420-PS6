@@ -1,4 +1,4 @@
-function [T, X] = mod_simulate(nTrials, atpConcs, iterations)
+function [T, X] = mod_simulate(nTrials, atpConcs, force, simTime)
 
 
 
@@ -16,7 +16,7 @@ end
 
 
 %% Setup
-
+preAllocLength = 7e2 .* simTime;
 [tempT, tempX] = deal(zeros(preAllocLength, nTrials));
 dyneins(1,nTrials) = Dynein;
 
@@ -27,9 +27,9 @@ iStep = 1;
 % FIXME - this is very unclear
 while any(continueSim)
     % CHECK FOR FORCES
-    forces = force(continueSim);
+    simForces = force(continueSim);
     
-    [simDyneins, dt] = simDyneins.update(atpConcs, forces);
+    [simDyneins, dt] = simDyneins.update(atpConcs, forceFunc);
     
     iStep = iStep + 1;
     simTs(iStep,:) = dt + simTs((iStep - 1), :);

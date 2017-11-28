@@ -7,7 +7,7 @@ switch nargin
         error('Unexpected number of arguments.');
 end
 binary = false;
-if length(weights) == 1
+if size(weights, 2) == 1
     if weights > 1 || weights < 0
         error('A single weight must be a probability, 0 <= p <= 1.')
     end
@@ -21,6 +21,13 @@ else
         weights(infTerms) = 1;
     end
     wSum = sum(weights);
+    if wSum <= 0
+        choice = [];
+        if wSum < 0
+            warning('Weights should be positively valued.');
+        end
+        return
+    end
     probs = weights / wSum;
 end
 nWeightSets = size(weights, 1);

@@ -2,10 +2,12 @@ classdef PlotBuilder
     properties
         X
         Y
+        PointColor
         LineSpecCycleLength
         ColorOrderCycleLength
         LineSpec = {'-'} % setter update cell length
         MarkerSize % setter update cell length
+        Marker
         MarkerFaceColor % setter update cell length
         LineWidth % setter update cell length
         Grid = 'off'
@@ -55,7 +57,7 @@ classdef PlotBuilder
                 axes = subplot(1, 1, 1);                
             end
             box(axes, obj.Box); 
-            plotSettingNames = {'MarkerSize','MarkerFaceColor', ...
+            plotSettingNames = {'Marker', 'MarkerSize','MarkerFaceColor', ...
                                 'LineWidth'};
             lineSpecIndex = 1;
             for i = 1:nYVals
@@ -72,8 +74,14 @@ classdef PlotBuilder
                     % FIXME - handle incorrectly formatted axes assignment
                     % value
                 end
-               
-                if ~isempty(obj.YError) && ~isempty(obj.YError{i})
+                
+                if ~isempty(obj.PointColor) && ~isempty(obj.PointColor{i})
+                    tempX = [obj.X{i}(:); NaN];
+                    tempY = [obj.Y{i}(:); NaN]; 
+                    tempC = [obj.PointColor{i}(:); obj.PointColor{i}(end)];
+                    h = patch(axes, tempX, tempY, tempC, ...
+                        'EdgeColor', 'interp');
+                elseif ~isempty(obj.YError) && ~isempty(obj.YError{i})
                     h = errorbar(axes, obj.X{i}, obj.Y{i}, ...
                                  obj.YError{i}, ...
                                  obj.LineSpec{lineSpecIndex});                    
