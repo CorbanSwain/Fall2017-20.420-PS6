@@ -32,20 +32,20 @@ classdef ModDynein < handle
         P_SYN_0 = SinghConstants.P_SYN_0
         
         % Dependent Constants
-        NUM_SECOND_SITES = Dynein.NUM_SITES - Dynein.NUM_HYDRO_SITES
+        NUM_SECOND_SITES = ModDynein.NUM_SITES - ModDynein.NUM_HYDRO_SITES
         
-        STEP_SIZE = (Dynein.NUM_SITES + 1 ...
-            - colon(1, Dynein.NUM_SITES)) ...
-            .* Dynein.STEP_INCREMENT
+        STEP_SIZE = (ModDynein.NUM_SITES + 1 ...
+            - colon(1, ModDynein.NUM_SITES)) ...
+            .* ModDynein.STEP_INCREMENT
         
-        K_ON_0 = Dynein.K_ON_0_RATIO .* Dynein.K_ON_1_0
+        K_ON_0 = ModDynein.K_ON_0_RATIO .* ModDynein.K_ON_1_0
         
-        K_OFF_0 = [Dynein.K_OFF_1_0, ones(1, Dynein.NUM_SECOND_SITES) ...
-            .* Dynein.K_OFF_2_0]
+        K_OFF_0 = [ModDynein.K_OFF_1_0, ones(1, ModDynein.NUM_SECOND_SITES) ...
+            .* ModDynein.K_OFF_2_0]
         
-        HYDRO_PREFACTOR = [1e-2, ones(1, Dynein.NUM_SECOND_SITES)]
+        HYDRO_PREFACTOR = [1e-2, ones(1, ModDynein.NUM_SECOND_SITES)]
         
-        BETA = 1 - Dynein.ALPHA;
+        BETA = 1 - ModDynein.ALPHA;
         
     end % constant properties
     
@@ -55,21 +55,32 @@ classdef ModDynein < handle
         S
         PrimaryS
         SecondaryS
+        HasVesicle
+        Velocity
     end % dependent properties
     
     
     
     methods
-        function obj = ModDynein(startPos)
-            obj.Position = startPos;
-            if Dynein.NUM_SITES <= Dynein.NUM_HYDRO_SITES
+        function objs = ModDynein(startPos)
+            % CONSTANT VALIDITY CHECKING
+            if ModDynein.NUM_SITES <= ModDynein.NUM_HYDRO_SITES
                 error('NUM_SITES must be greater than NUM_HYDRO_SITES');
             end
-            if Dynein.NUM_SITES ~= length(Dynein.K_ON_0_RATIO)
+            if ModDynein.NUM_SITES ~= length(ModDynein.K_ON_0_RATIO)
                 error('K_ON_0_RATIO must have length equal to NUM_SITES');
             end
-            obj.AtpSites = zeros(1, Dynein.NUM_SITES);
-        end % Dynein constructor
+ 
+            if nargin > 0
+                % INITIALIZATION           
+                nDyns = size(startPos, 1);
+                objs(1, nDyns) = ModDynein;
+                for i = 1:nDyns
+                    objs(i).Position = startPos(i, :);
+                    objs(i).AtpSites = zeros(1, ModDynein.NUM_SITES);
+                end
+            end
+        end % ModDynein constructor
         
         function val = get.S(obj)
             val = sum(obj.AtpSites);
@@ -77,10 +88,10 @@ classdef ModDynein < handle
         
         % PrimaryS Get/Set
         function val = get.PrimaryS(obj)
-            val = sum(obj.AtpSites(1:Dynein.NUM_HYDRO_SITES));
+            val = sum(obj.AtpSites(1:ModDynein.NUM_HYDRO_SITES));
         end
         function obj = set.PrimaryS(obj, val)
-            val = CNSUtils.bound(val, 0, Dynein.NUM_HYDRO_SITES, ...
+            val = CNSUtils.bound(val, 0, ModDynein.NUM_HYDRO_SITES, ...
                 'PrimaryS');
             obj.AtpSites(1:end) = false;
             obj.AtpSites(1:val) = true;
@@ -88,12 +99,12 @@ classdef ModDynein < handle
         
         % SecondaryS Get/Set
         function val = get.SecondaryS(obj)
-            val = sum(obj.AtpSites((Dynein.NUM_HYDRO_SITES + 1):end));
+            val = sum(obj.AtpSites((ModDynein.NUM_HYDRO_SITES + 1):end));
         end
         function obj = set.SecondaryS(obj, val)
-            val = CNSUtils.bound(val, 0, Dynein.NUM_SECOND_SITES, ...
+            val = CNSUtils.bound(val, 0, ModDynein.NUM_SECOND_SITES, ...
                 'SecondaryS');
-            iBegin = Dynein.NUM_HYDRO_SITES + 1;
+            iBegin = ModDynein.NUM_HYDRO_SITES + 1;
             obj.AtpSites(iBegin:end) = false;
             obj.AtpSites(iBegin:val) = true;
         end
@@ -102,7 +113,7 @@ classdef ModDynein < handle
         function obj = set.AtpSites(obj, val)
             if length(val) ~= obj.NUM_SITES
                 error('AtpSites must be a vector of length %d.', ...
-                    Dynein.NUM_SITES);
+                    ModDynein.NUM_SITES);
             end
             logicalVal = logical(val);
             if ~all(val == logicalVal)
@@ -120,7 +131,7 @@ classdef ModDynein < handle
             val = find(obj.AtpSites, 1, 'last');
         end
         function val = nextAtpHydro(obj)
-            primarySites = obj.AtpSites(1:Dynein.NUM_HYDRO_SITES);
+            primarySites = obj.AtpSites(1:ModDynein.NUM_HYDRO_SITES);
             val = find(primarySites, 1, 'last');
         end
         
@@ -155,9 +166,9 @@ classdef ModDynein < handle
                 val = 0;
                 return;
             end
-            kon0 = Dynein.K_ON_0(nextOn);
-            if nextOn > Dynein.NUM_HYDRO_SITES
-                loadfactor = Dynein.loadfactor(force);                
+            kon0 = ModDynein.K_ON_0(nextOn);
+            if nextOn > ModDynein.NUM_HYDRO_SITES
+                loadfactor = ModDynein.loadfactor(force);                
             else
                 loadfactor = 1;
             end
@@ -169,7 +180,7 @@ classdef ModDynein < handle
                 val = 0;
                 return;
             end
-            koff0 = Dynein.K_OFF_0(nextOff);
+            koff0 = ModDynein.K_OFF_0(nextOff);
             val = koff0;
         end
         function val = kcat(obj, force)
@@ -178,10 +189,10 @@ classdef ModDynein < handle
                 return;
             end
             s = obj.S;
-            prefactor = Dynein.HYDRO_PREFACTOR(s);
-            expTerm = exp(-Dynein.ALPHA .* force .* Dynein.stepsize(s) ...
-                ./ Dynein.KBT);
-            val = prefactor .* Dynein.K_CAT_0 .* expTerm;
+            prefactor = ModDynein.HYDRO_PREFACTOR(s);
+            expTerm = exp(-ModDynein.ALPHA .* force .* ModDynein.stepsize(s) ...
+                ./ ModDynein.KBT);
+            val = prefactor .* ModDynein.K_CAT_0 .* expTerm;
         end
         function val = getRates(obj, atpConc, force)
             val = [obj.kon(atpConc, force), ...
@@ -192,14 +203,14 @@ classdef ModDynein < handle
         % stepping
         function val = probabilityReverse(obj, force)
             s = obj.S;
-            expTerm = exp(Dynein.BETA .* force .* Dynein.stepsize(s) ...
-                ./ Dynein.KBT);
-            val = Dynein.P_SYN_0 .* expTerm;
+            expTerm = exp(ModDynein.BETA .* force .* ModDynein.stepsize(s) ...
+                ./ ModDynein.KBT);
+            val = ModDynein.P_SYN_0 .* expTerm;
             val = CNSUtils.bound(val, 0, 1);
         end
         function obj = step(obj)
             obj.PrevPos = obj.Position;
-            obj.Position(1) = obj.PrevPos(1) + Dynein.stepsize(obj.S);
+            obj.Position(1) = obj.PrevPos(1) + ModDynein.stepsize(obj.S);
             obj = obj.hydrolyzeAtp;
         end
         function obj = attemptStep(obj, force)
@@ -208,60 +219,85 @@ classdef ModDynein < handle
             end
         end
         
-        function obj = update(obj, atpConc, force)
-            sz = size(obj);
-            nObj = prod(sz);
-            % FIXME - Functionalize this
-            if isscalar(atpConc)
-                atpConc = atpConc .* ones(sz);
-            end
-            if isscalar(force)
-                force = force .* ones(sz);
-            end
+        function obj = update(obj, atpConc)
+            nObj = numel(obj);
             for i = 1:nObj
-                currentObj = obj(i);
-                rates = currentObj.getRates(atpConc(i), force(i));
+                if obj(i).HasVesicle
+                    force = ModConstants.drag_force(obj(i).Velocity);
+                else
+                    force = 0;
+                end
+                rates = obj(i).getRates(atpConc, force);
                 dt = CNSUtils.mcTimeStep(rates);
-                obj.PrevTime = obj.Time;
-                obj.Time = obj.PrevTime + dt;
+                obj(i).PrevTime = obj(i).Time;
+                obj(i).Time = obj(i).PrevTime + dt;
                 choice = CNSUtils.randchoose(rates); 
                 switch choice
                     case 1
-                        obj(i) = currentObj.bindAtp;
+                        obj(i) = obj(i).bindAtp;
                     case 2
-                        obj(i) = currentObj.unbindAtp;
+                        obj(i) = obj(i).unbindAtp;
                     case 3
-                        obj(i) = currentObj.attemptStep(force(i));            
+                        obj(i) = obj(i).attemptStep(force);  
+%                         fprintf('STEPPING Dynein %d\n', i);
                 end % switch
             end % loop through objects
         end % update function
         
         function val = interpPos(obj, tq)
+            if isempty(obj.PrevPos)
+               val = obj.Position;
+               return
+            end
+            x = [obj.PrevPos(1), obj.Position(1)];
+            if x(1) == x(2)
+                val = obj.Position;
+                return
+            end
             t = [obj.PrevTime, obj.Time];
-            x = [obj.PrevPos, obj.Position];
-            val = interp1(t, x, tq);
-            if isnan(val), error(['Querried time is outside of ', ...
-                'the interpolation range.']); end
+            val = [interp1(t, x, tq), obj.Position(2)];
+            if isnan(val(1))
+                error(['Querried time is outside of ', ...
+                       'the interpolation range.']);
+            end
+        end
+        
+        function val = get.HasVesicle(obj)
+            val = ~isempty(obj.Vesicle);
+        end
+        
+        function val = get.Velocity(obj)
+            if isempty(obj.PrevPos)
+               val = 0;
+               return
+            end
+            dx = obj.Position(1) - obj.PrevPos(1);
+            if dx == 0
+                val = 0;
+            else
+                val = dx ./ (obj.Time - obj.PrevTime);
+            end
         end
         
 %         function disp(obj)
-%             siteFormat = [repmat('%d - ', 1, Dynein.NUM_SITES - 1), '%d'];
+%             siteFormat = [repmat('%d - ', 1, ModDynein.NUM_SITES - 1), '%d'];
 %             siteStr = sprintf(siteFormat, obj.AtpSites);
-%             fprintf(['\tDynein with ATP Sites: %s | ', ...
+%             fprintf(['\tModDynein with ATP Sites: %s | ', ...
 %                      'at Position: %5.1f\n'], ... 
 %                     siteStr, ...
 %                     obj.Position);
 %         end
+
     end % methods
     
     methods (Static)
         function val = stepsize(s)
             if s == 0, val = 0; return; end
-            val = Dynein.STEP_SIZE(s);
+            val = ModDynein.STEP_SIZE(s);
         end
         
         function val = loadfactor(force)
-            val = exp((force .* Dynein.D0 ./ Dynein.KBT));
+            val = exp((force .* ModDynein.D0 ./ ModDynein.KBT));
         end
     end % static methods
-end % Dynein class
+end % ModDynein class

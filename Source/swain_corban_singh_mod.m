@@ -9,7 +9,8 @@ function swain_corban_singh_mod
 %% Figures
 figures{11} = @testfig1;
     function fb = testfig1
-        dt = 1e-3;
+        nFig = 11;
+        dt = 1e-4;
         nSteps = 1e5;
         pos = zeros(nSteps, 2); 
         for iStep = 2:nSteps
@@ -25,12 +26,13 @@ figures{11} = @testfig1;
         pb.Marker{1} = 'none';
         pb.MarkerFaceColor{1} = 'flat';        
         fb = CNSUtils.FigureBuilder;
-        fb.Number = 1;
+        fb.Number = nFig;
         fb.PlotBuilders = pb;
     end
 
 figures{12} = @testfig2;
     function fb = testfig2
+        nFig = 12;
         dt = 1E-2;
         nSteps = 1e5;
         nTrials = 30;
@@ -50,16 +52,30 @@ figures{12} = @testfig2;
         end
         
         fb = CNSUtils.FigureBuilder;
-        fb.Number = 2;
+        fb.Number = nFig;
         fb.PlotBuilders = pb;
     end
 
+figures{7} = @modFigure1;
+    function fb = modFigure1
+        simTime = 5; % s
+        atpConc = 1e-3; % M
+        dt0 = 1e-4; % s
+        axonCoverage = 0.5; % percentage
+        mtSpacing = 100; % nm
+        dyneinPerMt = 1;
+        nVesicles = 10;
+        [dT, dX, dY, vT, vX, vY] = mod_simulate(simTime, atpConc, dt0, ... 
+            axonCoverage, mtSpacing, dyneinPerMt, nVesicles);
+        fb = CNSUtils.FigureBuilder;
+    end
 
 %% Main Block
 
     function main
+        CNSUtils.cleanup;
         CNSUtils.FigureBuilder.setDefaults;
-        figure(figures{11}());
+        figures{7}();
         drawnow; commandwindow;
     end % function main
 

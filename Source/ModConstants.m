@@ -10,6 +10,7 @@ classdef ModConstants
         
         SIM_X_LIM = [0 Inf]; % nm
         SIM_Y_LIM = [0 2e3]; % nm
+        AXON_WIDTH = 2e3; % nm
         
         ZETA = 6 * pi * ModConstants.ETA * ModConstants.R_VES % pN s / nm
         D = SinghConstants.KBT / ModConstants.ZETA % nm^2 / s

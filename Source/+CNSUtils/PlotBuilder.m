@@ -3,6 +3,7 @@ classdef PlotBuilder
         X
         Y
         PointColor
+        ColorMap
         LineSpecCycleLength
         ColorOrderCycleLength
         LineSpec = {'-'} % setter update cell length
@@ -63,13 +64,16 @@ classdef PlotBuilder
             for i = 1:nYVals
                 % FIXME - maybe functionalize this more? Be able to take in
                 % shorter cell arrays then vars.
+                
+                % FIXME - should i be using try-catch instead of 
+                % isempty(..)?
                 if ~isempty(obj.AxisAssignment)
                     % FIXME - Check obj.AxisAssignment has length equal to
                     % nYVals
                     if obj.AxisAssignment(i) == 1
-                        yyaxis left
+                        yyaxis(axes, 'left');
                     else
-                        yyaxis right
+                        yyaxis(axes, 'right');
                     end
                     % FIXME - handle incorrectly formatted axes assignment
                     % value
@@ -81,6 +85,9 @@ classdef PlotBuilder
                     tempC = [obj.PointColor{i}(:); obj.PointColor{i}(end)];
                     h = patch(axes, tempX, tempY, tempC, ...
                         'EdgeColor', 'interp');
+                    if ~isempty(obj.ColorMap) && ~isempty(obj.ColorMap{i})
+                        colormap(h, obj.ColorMap{i});
+                    end
                 elseif ~isempty(obj.YError) && ~isempty(obj.YError{i})
                     h = errorbar(axes, obj.X{i}, obj.Y{i}, ...
                                  obj.YError{i}, ...
