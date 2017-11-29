@@ -1,19 +1,26 @@
 classdef ModConstants
     properties (Constant)
         ETA = 6E-9 % pN s / nm^2 (6 centiPoise)
-        R_VES = 75 / 2 % nm, vessicle radius
-        L_DYN = 35 % nm
+     
+        %%% WARNING, USE EQN HELPER TO UPDATE FUNCTIONS VD_EFF and SA_V %%
+        %%% IF YOU CHANGE THESE VALUES                                  %%
+        R_VES = 75 / 2 % nm, vessicle radius                            %%
+        L_DYN = 35 % nm                                                 %%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
         MEM_AREA_DENSITY = 4.23E-24 % mol membrane / nm^2
         K_D_MEM_DYN = 6E3 % pM
         K_OFF_MEM_DYN = 0.1 % 1 / s
         K_ON_MEM_DYN = 690; % 1 / (s * M)
         
-        SIM_X_LIM = [0 Inf]; % nm
+        SIM_X_LIM = [0 Inf]; % nm %
         SIM_Y_LIM = [0 2e3]; % nm
         AXON_WIDTH = 2e3; % nm
         
         ZETA = 6 * pi * ModConstants.ETA * ModConstants.R_VES % pN s / nm
         D = SinghConstants.KBT / ModConstants.ZETA % nm^2 / s
+%         D = 2e4 % nm^2 / s\
+%         ZETA = SinghConstants.KBT / ModConstants.D; 
         VD = 4 / 3 * pi * ModConstants.L_DYN .^ 3
         MAX_DIST = ModConstants.R_VES + ModConstants.L_DYN
         MIN_DIST = abs(ModConstants.R_VES - ModConstants.L_DYN)

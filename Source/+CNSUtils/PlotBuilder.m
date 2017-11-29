@@ -4,6 +4,8 @@ classdef PlotBuilder
         Y
         PointColor
         ColorMap
+        CAxisLimits
+        EdgeColorMethod = 'interp'
         LineSpecCycleLength
         ColorOrderCycleLength
         LineSpec = {'-'} % setter update cell length
@@ -84,9 +86,13 @@ classdef PlotBuilder
                     tempY = [obj.Y{i}(:); NaN]; 
                     tempC = [obj.PointColor{i}(:); obj.PointColor{i}(end)];
                     h = patch(axes, tempX, tempY, tempC, ...
-                        'EdgeColor', 'interp');
+                        'EdgeColor', obj.EdgeColorMethod);
                     if ~isempty(obj.ColorMap) && ~isempty(obj.ColorMap{i})
-                        colormap(h, obj.ColorMap{i});
+                        colormap(axes, obj.ColorMap{i});
+                        if ~isempty(obj.CAxisLimits) && ...
+                           ~isempty(obj.CAxisLimits{i})
+                            caxis(axes, obj.CAxisLimits{i});
+                        end
                     end
                 elseif ~isempty(obj.YError) && ~isempty(obj.YError{i})
                     h = errorbar(axes, obj.X{i}, obj.Y{i}, ...

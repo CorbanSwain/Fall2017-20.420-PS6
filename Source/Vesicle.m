@@ -39,7 +39,7 @@ classdef Vesicle < handle
                     % May need with different dt
                     % poff = CNSUtils.bound(poff,0,1);
                     if CNSUtils.randchoose(poff)
-                        fprintf('\nUN-BINDING,         Ves-%2d\n', iObj);
+%                         fprintf('\nUN-BINDING,        Ves-%2d\n', iObj);
                         obj.Dynein.Vesicle = [];
                         obj.Dynein = [];
                     end
@@ -48,16 +48,18 @@ classdef Vesicle < handle
                         ModConstants.D, ...
                         dt, ModConstants.SIM_X_LIM,...
                         ModConstants.SIM_Y_LIM);
-                    distances = obj.distTo(time, dyneins);
-                    pons = ModConstants.K_ON_EFF(distances) .* dt;
-                    if any(pons)
-                        pSomething = CNSUtils.bound(sum(pons), 0, 1);
-                        if CNSUtils.randchoose(pSomething)
-                            choice = CNSUtils.randchoose(pons); 
-                            fprintf('\nBINDING, Dyn-%2d to Ves-%2d\n', ...
-                                choice, iObj);
-                            obj.Dynein = dyneins(choice);
-                            obj.Dynein.Vesicle = obj;
+                    if ~isempty(dyneins)
+                        distances = obj.distTo(time, dyneins);
+                        pons = ModConstants.K_ON_EFF(distances) .* dt;
+                        if any(pons)
+                            pSomething = CNSUtils.bound(sum(pons), 0, 1);
+                            if CNSUtils.randchoose(pSomething)
+                                choice = CNSUtils.randchoose(pons);
+%                                 fprintf('\nBINDING, Dyn-%2d to Ves-%2d\n', ...
+%                                     choice, iObj);
+                                obj.Dynein = dyneins(choice);
+                                obj.Dynein.Vesicle = obj;
+                            end
                         end
                     end
                 end

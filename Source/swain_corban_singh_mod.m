@@ -58,25 +58,67 @@ figures{12} = @testfig2;
 
 figures{7} = @modFigure1;
     function fb = modFigure1
-        simTime = 5; % s
-        atpConc = 1e-3; % M
-        dt0 = 1e-4; % s
-        axonCoverage = 0.5; % percentage
-        mtSpacing = 100; % nm
-        dyneinPerMt = 1;
-        nVesicles = 10;
-        [dT, dX, dY, vT, vX, vY] = mod_simulate(simTime, atpConc, dt0, ... 
-            axonCoverage, mtSpacing, dyneinPerMt, nVesicles);
+        nFig = 7;
+        simTime = 10; % s
+        atpConc = 2e-3; % M
+        dt0 = 2e-4; % s
+        axonCoverage = 0.6; % percentage
+        mtSpacing = 20; % nm
+        dyneinPerMt = 2;
+        nVesicles = 100;
+        cacheName = "SimulationCache-HighD.mat";
+        doLoad = true;
+        if doLoad
+            load(cacheName);
+        else
+            [dT, dX, dY, vT, vX, vY, vB] = mod_simulate(simTime, atpConc, ...
+                dt0, ...
+                axonCoverage, mtSpacing, dyneinPerMt, nVesicles);
+            [dT2, dX2, dY2, vT2, vX2, vY2, vB2] = mod_simulate(simTime,...
+                atpConc, dt0, ...
+                axonCoverage, mtSpacing, 0, nVesicles);
+            save(cacheName, 'dT', 'dX', 'dY', 'vT', 'vX', 'vY', 'vB', ...
+                'dT2', 'dX2', 'dY2', 'vT2', 'vX2', 'vY2', 'vB2');
+        end
+        
+        pb = CNSUtils.PlotBuilder;
+        maxX1 = max(max(vX));
+        maxX2 = max(max(vX2));
+        maxX = max([maxX1, maxX2]);
+        for iVes = 1:nVesicles
+            pb.X{iVes} = vX(:, iVes);
+            pb.Y{iVes} = vY(:, iVes) + 2000 .* (iVes);
+            pb.PointColor{iVes} = vB(:, iVes); 
+            pb.ColorMap{iVes} = 'cool';
+            pb.CAxisLimits{iVes} = [0 1];
+            pb.LineWidth{iVes} = 1;
+        end
+        for iVes = 1:nVesicles
+            plotInd = iVes + nVesicles;
+            pb.X{plotInd} = vX2(:, iVes);
+            pb.Y{plotInd} = vY2(:, iVes) + 2000 .* (plotInd + 10);
+            pb.PointColor{plotInd} = vB2(:, iVes); 
+            pb.ColorMap{plotInd} = 'cool';
+            pb.CAxisLimits{plotInd} = [0 1];
+            pb.LineWidth{plotInd} = 1;
+        end
+        pb.EdgeColorMethod = 'flat';
+        pb.XLim = [0 maxX];
+        pb.YLim = [0 (2000 * ((nVesicles * 2) + 11))];
         fb = CNSUtils.FigureBuilder;
+        fb.Name = "Vessicle Movement with Dynein (bound)";
+        fb.Number = nFig;
+        fb.PlotBuilders = pb;
     end
 
 %% Main Block
 
     function main
-        CNSUtils.cleanup;
+%         CNSUtils.cleanup;
         CNSUtils.FigureBuilder.setDefaults;
-        figures{7}();
-        drawnow; commandwindow;
+        figure(figures{7}()); drawnow;
+        CNSUtils.FigureBuilder.saveFigure;
+        commandwindow;
     end % function main
 
 tic; main; toc;

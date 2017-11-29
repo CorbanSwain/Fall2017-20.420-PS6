@@ -209,8 +209,7 @@ classdef ModDynein < handle
             val = CNSUtils.bound(val, 0, 1);
         end
         function obj = step(obj)
-            obj.PrevPos = obj.Position;
-            obj.Position(1) = obj.PrevPos(1) + ModDynein.stepsize(obj.S);
+            obj.Position(1) = obj.Position(1) + ModDynein.stepsize(obj.S);
             obj = obj.hydrolyzeAtp;
         end
         function obj = attemptStep(obj, force)
@@ -227,20 +226,24 @@ classdef ModDynein < handle
                 else
                     force = 0;
                 end
+                
                 rates = obj(i).getRates(atpConc, force);
                 dt = CNSUtils.mcTimeStep(rates);
                 obj(i).PrevTime = obj(i).Time;
-                obj(i).Time = obj(i).PrevTime + dt;
+                obj(i).Time = obj(i).PrevTime + dt;                                
                 choice = CNSUtils.randchoose(rates); 
+                
+                obj(i).PrevPos = obj.Position;
                 switch choice
                     case 1
-                        obj(i) = obj(i).bindAtp;
+                        obj(i) = obj(i).bindAtp;                        
                     case 2
-                        obj(i) = obj(i).unbindAtp;
+                        obj(i) = obj(i).unbindAtp;                        
                     case 3
                         obj(i) = obj(i).attemptStep(force);  
 %                         fprintf('STEPPING Dynein %d\n', i);
                 end % switch
+                
             end % loop through objects
         end % update function
         

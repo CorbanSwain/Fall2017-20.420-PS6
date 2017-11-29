@@ -28,7 +28,7 @@ classdef FigureBuilder
                 error(['The subplot dimensions are too small ', ...
                        'for the number of plots.']);
             end
-            for iPlot = 1:length(obj.PlotBuilders)
+            for iPlot = 1:numel(obj.PlotBuilders)
                 ax = subplot(obj.SubplotSize(1), ...
                              obj.SubplotSize(2), iPlot);
                 hold on;
