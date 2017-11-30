@@ -5,6 +5,8 @@ classdef PlotBuilder
         PointColor
         ColorMap
         CAxisLimits
+        ColorBar
+        Text % .Position , .String, .PointSize
         EdgeColorMethod = 'interp'
         LineSpecCycleLength
         ColorOrderCycleLength
@@ -20,6 +22,9 @@ classdef PlotBuilder
         YLabel
         XLim
         YLim
+        
+        YTicks
+        YTickLabels
         LegendLabels
         LegendLineWidth = 1.5
         LegendLocation = 'best'
@@ -159,6 +164,17 @@ classdef PlotBuilder
             end
         end
 
+        if ~isempty(obj.YTicks)
+            yticks(axes, obj.YTicks);
+            if ~isempty(obj.YTickLabels)
+                yticklabels(axes, obj.YTickLabels);
+            end
+        end
+        
+        if ~isempty(obj.ColorBar)
+            colorbar(axes);
+        end
+        
         if ~isempty(obj.LegendLabels)
             legendHandle = legend(obj.LegendLabels);
             if ~isempty(obj.LegendTitle)

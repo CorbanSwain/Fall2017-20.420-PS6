@@ -17,10 +17,10 @@ classdef ModConstants
         SIM_Y_LIM = [0 2e3]; % nm
         AXON_WIDTH = 2e3; % nm
         
-        ZETA = 6 * pi * ModConstants.ETA * ModConstants.R_VES % pN s / nm
-        D = SinghConstants.KBT / ModConstants.ZETA % nm^2 / s
-%         D = 2e4 % nm^2 / s\
-%         ZETA = SinghConstants.KBT / ModConstants.D; 
+%         ZETA = 6 * pi * ModConstants.ETA * ModConstants.R_VES % pN s / nm
+%         D = SinghConstants.KBT / ModConstants.ZETA % nm^2 / s
+        D = 2e4 % nm^2 / s\
+        ZETA = SinghConstants.KBT / ModConstants.D; 
         VD = 4 / 3 * pi * ModConstants.L_DYN .^ 3
         MAX_DIST = ModConstants.R_VES + ModConstants.L_DYN
         MIN_DIST = abs(ModConstants.R_VES - ModConstants.L_DYN)
