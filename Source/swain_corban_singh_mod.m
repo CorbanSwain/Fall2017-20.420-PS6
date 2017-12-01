@@ -3,11 +3,11 @@ function swain_corban_singh_mod
 
 
 %% Global Variableas
-cacheName = "swain_SimulationCacheMod";
+cacheName = "swain_SimulationCacheMod_highD";
 
 
 % vv CHANGE THIS to 10 to recreate figures shown in report
-simTime = 0.5; % s
+simTime = 60; % s
 
 
 atpConc = 2e-3; % M
@@ -116,6 +116,7 @@ figures{13} = @testFigure3;
         pb.YLim = [0 (2000 * (((nVesicles + 11)* 2) ))] ./ 1e3;
         fb = CNSUtils.FigureBuilder;
         fb.Number = nFig;
+        fb.Name = sprintf("%d - Vessicle X-displacements, stacked", nFig);
         fb.PlotBuilders = pb;
         fb.Position = [245 83 1403 736];
     end
@@ -259,10 +260,10 @@ figures{9} = @modFigure3;
     function main
         CNSUtils.cleanup;
         
-        simulateAndSave;
+%         simulateAndSave;
         
         CNSUtils.FigureBuilder.setDefaults;
-        for i = 7:9
+        for i = 13
             figure(figures{i}()); drawnow;
             CNSUtils.FigureBuilder.saveFigure;
         end
