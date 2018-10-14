@@ -58,6 +58,7 @@ for iTime = 2:nTimePoints
                 dyneinUpdateCount(iDyn) = dyneinUpdateCount(iDyn) + 1;
                 upCount = dyneinUpdateCount(iDyn);
                 dyneins(iDyn) = dyneins(iDyn).update(atpConc);
+                % FIXME - add try - catch here for arr that is too long
                 tempDT(upCount, iDyn) = dyneins(iDyn).Time;
                 tempDX(upCount, iDyn) ...
                     = dyneins(iDyn).Position(1);
